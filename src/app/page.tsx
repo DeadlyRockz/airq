@@ -1,6 +1,5 @@
 import { AirqDashboard } from "@/components/airq/AirqDashboard";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { PageHeader, ThemeToggle } from "@/components/shared";
 import { buildDeterministicExplanation } from "@/lib/ai/explain";
 import { getDemoScenarioById } from "@/lib/fixtures/scenarios";
 import { evaluateAirQualityPolicy } from "@/lib/policy/engine";
@@ -26,7 +25,7 @@ export default function HomePage() {
   );
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <main id="main-content" className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
         title="AirQ"
         description="Safety-aware urban air quality assistant with transparent AQI scales, indoor precautions, and grounded explanations."

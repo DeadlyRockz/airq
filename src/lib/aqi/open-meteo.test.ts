@@ -152,4 +152,33 @@ describe("fetchLiveAirQuality", () => {
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.label).toBe("Thanjavur, Tamil Nadu, India");
   });
+
+  it("returns cached readings on repeated calls and throws on upstream 500", async () => {
+    const mockFetch = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          current: {
+            time: "2026-11-18T12:00",
+            us_aqi: 48,
+            pm2_5: 10.5,
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const coords = { latitude: 12.97, longitude: 77.59 };
+    const first = await fetchLiveAirQuality("Bengaluru", "US_EPA", coords, mockFetch);
+    const second = await fetchLiveAirQuality("Bengaluru", "US_EPA", coords, mockFetch);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(second.value).toBe(first.value);
+
+    const failingFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("Upstream error", { status: 500 }));
+    await expect(
+      fetchLiveAirQuality("BrokenCity", "US_EPA", undefined, failingFetch)
+    ).rejects.toThrow("status 500");
+  });
 });

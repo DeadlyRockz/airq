@@ -1,163 +1,30 @@
-# CI template. Copy to .github/workflows/ci.yml and replace every <PLACEHOLDER>.
-# Rules: ../stacks/ci-github-actions.md. Every job maps to a checkbox in the PR template
-# (templates/pull_request_template.md); what a machine cannot check stays a human review item.
-# Never delete, skip or `continue-on-error` a job to get green.
-#
-# Requires the composite setup action at .github/actions/setup/action.yml so Node and pnpm are
-# declared exactly once. Create it with this content (drop the leading "#   "):
-#
-#   name: Setup toolchain
-#   description: Install pnpm (from packageManager), Node (engines floor), and the workspace dependencies.
-#   runs:
-#     using: composite
-#     steps:
-#       # No `version:` input - pnpm/action-setup reads `packageManager` from the root package.json.
-#       - uses: pnpm/action-setup@v4
-#       # Pin the OLDEST line engines.node allows (">=22" -> 22.x.y) so CI tests the oldest supported
-#       # runtime and a newer local Node cannot hide an incompatibility. Bump both together.
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: <NODE_FLOOR_VERSION>
-#           cache: pnpm
-#       - shell: bash
-#         run: pnpm install --frozen-lockfile
 name: CI
 
 on:
   push:
-    branches: [main] # add develop / qa when the repo uses them
+    branches: [main]
   pull_request:
-  workflow_dispatch:
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
-env:
-  # Turborepo telemetry is opt-out; CI never phones home.
-  TURBO_TELEMETRY_DISABLED: "1"
-  DO_NOT_TRACK: "1"
-  # Deterministic date/time assertions regardless of runner locale.
-  TZ: UTC
-
 jobs:
-  lint:
-    name: lint
+  quality:
+    name: lint, typecheck, test, build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      - run: pnpm turbo run lint
-
-  format:
-    name: format
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      # Repo-wide by default. With a formatting backlog, replace this step with the changed-files
-      # variant in ../stacks/ci-github-actions.md 3.4 (git diff -z, parseable extensions only,
-      # xargs -0 prettier --check --no-error-on-unmatched-pattern). Narrow WHICH files, never HOW strictly.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
-
-  typecheck:
-    name: typecheck
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      - run: pnpm turbo run typecheck # `check-types` in repos that keep that name
-
-  test:
-    name: test (unit, no database)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      # A workspace whose runner config also matches real-database specs is excluded here and
-      # runs in the `integration` job below. This moves WHERE suites run, never WHICH suites run.
-      - run: pnpm turbo run test # add --filter=!<BACKEND_WORKSPACE> when a backend exists
-
-  # Its own job so a new advisory does not hide lint, typecheck and test results.
-  audit:
-    name: dependency audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      - run: pnpm audit --prod --audit-level high
-
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup
-      # Placeholders: the build only needs well-formed public values, never real keys. Every empty
-      # `*_URL=` key becomes a placeholder URL, every other empty key a placeholder string; keys that
-      # already carry a localhost default in .env.example are left alone.
-      - name: Provide placeholder env so apps build without real services
-        run: |
-          set -euo pipefail
-          for app in <WEB_APP_1> <WEB_APP_2>; do
-            sed -E 's#^(.*_URL)=$#\1=https://placeholder.invalid#; s#^([A-Z0-9_]+)=$#\1=placeholder-build-value#' \
-              "apps/$app/.env.example" > "apps/$app/.env.local"
-          done
-      - run: pnpm turbo run build
-
-  # -----------------------------------------------------------------------------------------------
-  # OPTIONAL JOBS. Uncomment the ones this repo needs and replace the placeholders.
-  # -----------------------------------------------------------------------------------------------
-
-  # Generated API types must not drift from the backend (repos with a NestJS backend;
-  # ../stacks/nestjs-backend.md 1.8). Blocking - never add continue-on-error here.
-  # api-types-drift:
-  #   name: api-types drift
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 20
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: ./.github/actions/setup
-  #     - run: pnpm gen:api-types
-  #     - name: Fail if the committed types differ from a fresh generation
-  #       run: |
-  #         set -euo pipefail
-  #         git diff --exit-code -- apps/<BACKEND_WORKSPACE>/openapi.json 'apps/*/lib/api-schema.d.ts'
-  #         # `git diff` cannot see a generated file that was never committed.
-  #         if [ -n "$(git ls-files --others --exclude-standard -- apps/<BACKEND_WORKSPACE>/openapi.json 'apps/*/lib/api-schema.d.ts')" ]; then
-  #           echo "::error::Generated API types are untracked. Run 'pnpm gen:api-types' and commit the result."
-  #           exit 1
-  #         fi
-
-  # Playwright against the app's stubbed backend (no database).
-  # e2e:
-  #   name: e2e (playwright)
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 30
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: ./.github/actions/setup
-  #     - run: pnpm --filter <WEB_APP> exec playwright install --with-deps chromium
-  #     - run: pnpm --filter <WEB_APP> test:e2e
-  #     - uses: actions/upload-artifact@v4
-  #       if: ${{ !cancelled() }}
-  #       with:
-  #         name: playwright-report
-  #         path: apps/<WEB_APP>/playwright-report/
-  #         retention-days: 7
-
-# Sources (paths relative to ~/Prahadeesh):
-#   private/git-repo/claredesk/booking/.github/workflows/ci.yml and .github/actions/setup/action.yml
-#   private/git-repo/claredesk/trionex/.github/workflows/ci.yml
-#   development-team/git-repo/s22-internal-projects/tournament/s22-tournament/.github/workflows/ci.yml
-#   development-team/git-repo/Solution22-AUS/DropinPOS/DropinPOS/.github/workflows/ci.yml
-# Consolidated 2026-11-08
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build

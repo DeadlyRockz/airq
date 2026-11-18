@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Wind } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { ErrorState } from "@/components/shared/ErrorState";
+import { EmptyState, ErrorState } from "@/components/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GroundedExplanation } from "@/lib/ai/explain";
 import type { AqiReading, UserContext } from "@/lib/aqi/types";

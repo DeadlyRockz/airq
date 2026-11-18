@@ -1,67 +1,22 @@
-# ADR-<NNNN>: <Short title - a noun phrase or an imperative>
+# ADR-0001: AirQ Tech Stack & Stateless Browser-Session Architecture
 
-- **Status:** <Proposed | Accepted | Superseded by [ADR-<MMMM>](<MMMM>-<slug>.md) | Deprecated>
-- **Date:** <YYYY-MM-DD>
-- **Decision log row:** D-<NNN> in `plans/README.md`
-- **Supersedes:** <ADR-<KKKK>, or "-">
-
-<!--
-Write the ADR BEFORE introducing a new framework, datastore, hosting platform, auth or tenancy
-model, or a major pattern (rules 5.3 / 10.3). Backfilling a decision already in force is allowed:
-say so in the Status line - "Accepted <date> - retroactive record of a decision taken <date> in
-<plan file §>". Never rewrite an accepted ADR's Decision in place; supersede it and link both ways.
-File name: docs/adr/<NNNN>-<kebab-case-title>.md, four-digit, sequential.
--->
+- **Status:** Accepted
+- **Date:** 2026-11-18
+- **Decision log row:** D-001 in `plans/README.md`
 
 ## Context
 
-<!--
-The forces: the requirement, the constraint, the rule that applies, the failure in the legacy
-system this corrects. Facts, each with where it was verified (plan §, autopsy item, docs URL).
-Two to six short paragraphs or bullets.
--->
+Challenge 6 requires a responsive, accessible, safety-aware urban air quality assistant that runs reliably with zero required login or database setup, supports no-key fallback operation, and enforces strict server-side handling for optional GenAI explanations.
 
 ## Decision
 
-<!--
-What we do, stated so a reader can check the code against it. Name the tables, columns, packages,
-ports, directories or commands. Bold the sentences that carry the decision. Where there is a
-deliberate carve-out, state it here with its boundary ("time columns are allowed in THIS migration
-ONLY").
--->
+1. **Frontend & Full-Stack Framework:** Next.js 16 (App Router) + React 19 + TypeScript (`strict: true`), managed with `pnpm`.
+2. **Design System:** Tailwind CSS v4 (OKLCH semantic tokens in `src/app/globals.css`), shadcn/ui primitives, `lucide-react`, and `next-themes`.
+3. **Validation & Testing:** Zod at all runtime boundaries; Vitest + Testing Library for pure domain, API route, and UI component tests.
+4. **Data & State:** Stateless server-side proxies for Open-Meteo and optional Gemini 2.5 Flash (`GEMINI_API_KEY`), with browser `sessionStorage` for user context and deterministic sample fixtures for automatic fallback.
 
 ## Consequences
 
-<!--
-What becomes easier; what becomes harder; what must now always be true and the guard, test or grep
-that proves it; what cost is accepted deliberately. One bullet each.
--->
-
-## Alternatives considered
-
-<!--
-One row each: the alternative and why it lost. Required when more than one option was viable;
-otherwise write "None - the rules leave one option."
--->
-
-| Alternative | Why not |
-| ----------- | ------- |
-| <option>    | <reason> |
-
-## How to verify this decision is still in force
-
-<!--
-A command or check a reader can run: a standing guard, a pgTAP test, a lockfile line, a build-output
-check, a migration header. If nothing mechanical can prove it, say so and name the review step.
--->
-
-<!--
-Brain provenance (delete this comment when copying into a repo):
-Sources
-- private/git-repo/claredesk/trionex/docs/adr/0001-tech-stack.md
-- private/git-repo/claredesk/trionex/docs/adr/0003-multi-tenancy.md
-- private/git-repo/claredesk/booking/docs/adr/0007-date-time-handling.md
-- development-team/git-repo/Solution22-AUS/DropinPOS/DropinPOS/docs/adr/0001-monorepo-with-turborepo-and-pnpm.md
-- development-team/git-repo/Solution22-AUS/DropinPOS/engineering-rules/05-documentation.md
-Consolidated 2026-11-08
--->
+- Zero database provisioning or credential friction for reviewers and judges.
+- Client bundle contains zero API keys and zero heavy external SDKs.
+- Deterministic policy engine remains pure and 100% unit-testable without network access.

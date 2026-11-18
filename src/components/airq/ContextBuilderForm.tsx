@@ -13,20 +13,84 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  ActivityGoal,
-  AqiScale,
-  CommuteMode,
-  IndoorFuelSource,
-  SensitivityGroup,
-  UserContext,
-} from "@/lib/aqi/types";
+import type { UserContext } from "@/lib/aqi/types";
 
 type CitySuggestion = {
   label: string;
   latitude: number;
   longitude: number;
 };
+
+type SelectFieldKey =
+  "preferredScale" | "sensitivityGroup" | "activityGoal" | "commuteMode" | "indoorFuelSource";
+
+type SelectFieldConfig = {
+  id: string;
+  key: SelectFieldKey;
+  label: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+};
+
+const SELECT_FIELDS: readonly SelectFieldConfig[] = [
+  {
+    id: "aqi-scale",
+    key: "preferredScale",
+    label: "AQI Scale",
+    options: [
+      { value: "INDIA_CPCB", label: "India CPCB AQI (0–500)" },
+      { value: "US_EPA", label: "US EPA AQI (0–500)" },
+    ],
+  },
+  {
+    id: "sensitivity-group",
+    key: "sensitivityGroup",
+    label: "Health & Sensitivity Group",
+    options: [
+      { value: "general", label: "General Adult" },
+      {
+        value: "sensitive_respiratory",
+        label: "Asthma / Respiratory Sensitivity",
+      },
+      { value: "children_elderly", label: "Children or Older Adults" },
+      { value: "outdoor_worker", label: "Outdoor Worker" },
+    ],
+  },
+  {
+    id: "activity-goal",
+    key: "activityGoal",
+    label: "Primary Plan Today",
+    options: [
+      { value: "commute", label: "Daily Commute" },
+      { value: "outdoor_exercise", label: "Outdoor Exercise" },
+      { value: "errands", label: "Short Errands" },
+      { value: "indoor_day", label: "Mostly Indoors" },
+    ],
+  },
+  {
+    id: "commute-mode",
+    key: "commuteMode",
+    label: "Travel Mode",
+    options: [
+      { value: "walk_cycle", label: "Walking or Cycling" },
+      { value: "public_transit", label: "Public Transit" },
+      { value: "car_ac_recirculate", label: "Car (AC Recirculate)" },
+      { value: "work_from_home", label: "Work from Home" },
+    ],
+  },
+  {
+    id: "indoor-fuel",
+    key: "indoorFuelSource",
+    label: "Indoor Cooking / Fuel Source",
+    options: [
+      { value: "none_electric", label: "Electric / Induction Only" },
+      {
+        value: "gas_stove_unvented",
+        label: "Gas Stove (Unvented or Low Exhaust)",
+      },
+      { value: "solid_fuel_or_kerosene", label: "Solid Fuel or Kerosene" },
+    ],
+  },
+];
 
 type ContextBuilderFormProps = {
   context: UserContext;
@@ -40,8 +104,8 @@ type ContextBuilderFormProps = {
 };
 
 /**
- * Interactive form for configuring city location (with browser geolocation & search suggestions),
- * AQI scale, sensitivity, commute mode, and indoor environment context.
+ * Interactive form for configuring city location (with browser geolocation and search
+ * suggestions), AQI scale, sensitivity, commute mode, and indoor environment context.
  *
  * @param props - Controlled form state and event handlers.
  * @returns ContextBuilderForm card.
@@ -135,6 +199,11 @@ export function ContextBuilderForm({
               placeholder="Type a city (e.g. Thanjavur, London)"
               value={context.locationLabel}
               onFocus={() => setShowSuggestions(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setShowSuggestions(false);
+                }
+              }}
               onChange={(e) => {
                 setShowSuggestions(true);
                 onContextChange({
@@ -188,96 +257,28 @@ export function ContextBuilderForm({
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="aqi-scale">AQI Scale</Label>
-          <Select
-            value={context.preferredScale}
-            onValueChange={(v) => updateField("preferredScale", v as AqiScale)}
-          >
-            <SelectTrigger id="aqi-scale">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="INDIA_CPCB">India CPCB AQI (0–500)</SelectItem>
-              <SelectItem value="US_EPA">US EPA AQI (0–500)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="sensitivity-group">Health & Sensitivity Group</Label>
-          <Select
-            value={context.sensitivityGroup}
-            onValueChange={(v) => updateField("sensitivityGroup", v as SensitivityGroup)}
-          >
-            <SelectTrigger id="sensitivity-group">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="general">General Adult</SelectItem>
-              <SelectItem value="sensitive_respiratory">
-                Asthma / Respiratory Sensitivity
-              </SelectItem>
-              <SelectItem value="children_elderly">Children or Older Adults</SelectItem>
-              <SelectItem value="outdoor_worker">Outdoor Worker</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="activity-goal">Primary Plan Today</Label>
-          <Select
-            value={context.activityGoal}
-            onValueChange={(v) => updateField("activityGoal", v as ActivityGoal)}
-          >
-            <SelectTrigger id="activity-goal">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="commute">Daily Commute</SelectItem>
-              <SelectItem value="outdoor_exercise">Outdoor Exercise</SelectItem>
-              <SelectItem value="errands">Short Errands</SelectItem>
-              <SelectItem value="indoor_day">Mostly Indoors</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="commute-mode">Travel Mode</Label>
-          <Select
-            value={context.commuteMode}
-            onValueChange={(v) => updateField("commuteMode", v as CommuteMode)}
-          >
-            <SelectTrigger id="commute-mode">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="walk_cycle">Walking or Cycling</SelectItem>
-              <SelectItem value="public_transit">Public Transit</SelectItem>
-              <SelectItem value="car_ac_recirculate">Car (AC Recirculate)</SelectItem>
-              <SelectItem value="work_from_home">Work from Home</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="indoor-fuel">Indoor Cooking / Fuel Source</Label>
-          <Select
-            value={context.indoorFuelSource}
-            onValueChange={(v) => updateField("indoorFuelSource", v as IndoorFuelSource)}
-          >
-            <SelectTrigger id="indoor-fuel">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none_electric">Electric / Induction Only</SelectItem>
-              <SelectItem value="gas_stove_unvented">
-                Gas Stove (Unvented or Low Exhaust)
-              </SelectItem>
-              <SelectItem value="solid_fuel_or_kerosene">Solid Fuel or Kerosene</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {SELECT_FIELDS.map((field) => (
+          <div key={field.id} className="space-y-1.5">
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Select
+              value={context[field.key]}
+              onValueChange={(value) =>
+                updateField(field.key, value as UserContext[typeof field.key])
+              }
+            >
+              <SelectTrigger id={field.id}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
 
         <div className="grid grid-cols-2 gap-2">
           <Button
