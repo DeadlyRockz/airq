@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { generateGroundedExplanation } from "@/lib/ai/explain";
 import { AqiReadingSchema, UserContextSchema } from "@/lib/aqi/types";
+import { parseJsonBody } from "@/lib/http/parse-json";
 import { evaluateAirQualityPolicy } from "@/lib/policy/engine";
 
 const ExplainRequestSchema = z.object({
@@ -19,14 +20,12 @@ const ExplainRequestSchema = z.object({
  * // POST /api/explain { context, reading }
  */
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
+  const jsonResult = await parseJsonBody(request);
+  if (!jsonResult.ok) {
+    return jsonResult.response;
   }
 
-  const parsed = ExplainRequestSchema.safeParse(body);
+  const parsed = ExplainRequestSchema.safeParse(jsonResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid explanation request payload." }, { status: 400 });
   }

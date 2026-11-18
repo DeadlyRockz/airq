@@ -113,10 +113,13 @@ export async function generateGroundedExplanation(
   ].join("\n");
 
   try {
-    const res = await fetchImpl(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+    const res = await fetchImpl(GEMINI_ENDPOINT, {
       method: "POST",
       signal: AbortSignal.timeout(8000),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [

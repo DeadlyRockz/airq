@@ -3,6 +3,7 @@ import { z } from "zod";
 import { fetchLiveAirQuality } from "@/lib/aqi/open-meteo";
 import { UserContextSchema } from "@/lib/aqi/types";
 import { getDemoScenarioById } from "@/lib/fixtures/scenarios";
+import { parseJsonBody } from "@/lib/http/parse-json";
 import { evaluateAirQualityPolicy } from "@/lib/policy/engine";
 
 const AirQualityRequestSchema = z.object({
@@ -21,14 +22,12 @@ const AirQualityRequestSchema = z.object({
  * // POST /api/air-quality { mode: "demo", scenarioId: "delhi-winter-smog", context: { ... } }
  */
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
+  const jsonResult = await parseJsonBody(request);
+  if (!jsonResult.ok) {
+    return jsonResult.response;
   }
 
-  const parsed = AirQualityRequestSchema.safeParse(body);
+  const parsed = AirQualityRequestSchema.safeParse(jsonResult.data);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid request parameters.", issues: parsed.error.issues },

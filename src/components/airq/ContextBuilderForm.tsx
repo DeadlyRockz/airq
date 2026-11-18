@@ -129,6 +129,9 @@ export function ContextBuilderForm({
               id="city-input"
               className="pl-9"
               autoComplete="off"
+              aria-autocomplete="list"
+              aria-expanded={showSuggestions && suggestions.length > 0}
+              aria-controls="city-suggestions-listbox"
               placeholder="Type a city (e.g. Thanjavur, London)"
               value={context.locationLabel}
               onFocus={() => setShowSuggestions(true)}
@@ -144,6 +147,7 @@ export function ContextBuilderForm({
 
             {showSuggestions && suggestions.length > 0 && (
               <div
+                id="city-suggestions-listbox"
                 role="listbox"
                 aria-label="City suggestions"
                 className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md"
@@ -152,6 +156,8 @@ export function ContextBuilderForm({
                   <Button
                     key={`${item.label}-${item.latitude}-${item.longitude}`}
                     type="button"
+                    role="option"
+                    aria-selected={context.locationLabel === item.label}
                     variant="ghost"
                     className="h-auto w-full justify-start px-3 py-2 text-left text-sm font-normal"
                     onClick={() => {
@@ -175,7 +181,11 @@ export function ContextBuilderForm({
             )}
           </div>
 
-          {locationHint && <p className="text-xs text-muted-foreground">{locationHint}</p>}
+          {locationHint && (
+            <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
+              {locationHint}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">

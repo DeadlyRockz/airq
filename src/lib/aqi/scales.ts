@@ -210,6 +210,9 @@ export function deriveCpcbFromPollutants(pollutants: Pollutants): {
   }
 
   candidates.sort((a, b) => b.subIndex - a.subIndex);
-  const top = candidates[0]!;
+  const top = candidates[0];
+  if (!top) {
+    return null;
+  }
   return { value: top.subIndex, dominantPollutant: top.pollutant };
 }

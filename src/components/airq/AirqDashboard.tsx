@@ -206,7 +206,7 @@ export function AirqDashboard({ initialExplanation, initialExplainMode }: AirqDa
         />
       </div>
 
-      <div className="space-y-4 lg:col-span-8">
+      <div className="space-y-4 lg:col-span-8" aria-live="polite">
         {isLoading ? (
           <div className="space-y-4" aria-busy="true">
             <Skeleton className="h-52 w-full rounded-lg" />

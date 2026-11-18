@@ -160,5 +160,13 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
  * const scenario = getDemoScenarioById("delhi-winter-smog");
  */
 export function getDemoScenarioById(id: string): DemoScenario {
-  return DEMO_SCENARIOS.find((s) => s.id === id) ?? DEMO_SCENARIOS[0]!;
+  const found = DEMO_SCENARIOS.find((s) => s.id === id);
+  if (found) {
+    return found;
+  }
+  const fallback = DEMO_SCENARIOS[0];
+  if (!fallback) {
+    throw new Error("DEMO_SCENARIOS must contain at least one scenario.");
+  }
+  return fallback;
 }
