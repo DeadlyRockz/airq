@@ -34,4 +34,3 @@ describe("GET /api/geocode", () => {
     expect(data.suggestions).toEqual([]);
   });
 });
-

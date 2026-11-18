@@ -37,4 +37,3 @@ describe("POST /api/explain", () => {
     expect(data.explanation.headline).toContain("New Delhi");
   });
 });
-
