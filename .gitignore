@@ -1,0 +1,64 @@
+# .gitignore template (../stacks/monorepo-pnpm-turborepo.md). Copy to the repo root as .gitignore.
+# Apps under apps/ may add their own for framework-specific output.
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.*
+
+# Environment: ignore EVERY .env variant, then re-allow the keys-only templates. A new
+# `.env.<something>` must never become committable by default (../core/04-security.md).
+.env*
+!.env.example
+!.env*.example
+
+# Secrets and tool config that carries tokens (real files live in ~/Prahadeesh/secrets, symlinked in)
+.mcp.json
+*.pem
+*.p8
+*.p12
+*.key
+*.keystore
+*.jks
+*.mobileprovision
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+web-build/
+
+# Turborepo / Vercel
+.turbo/
+.vercel
+
+# Expo / React Native
+.expo/
+expo-env.d.ts
+*.orig.*
+apps/*/ios/Pods/
+apps/*/ios/build/
+apps/*/android/build/
+apps/*/android/app/build/
+apps/*/android/.gradle/
+
+# Tests and coverage
+coverage/
+playwright-report/
+test-results/
+
+# Logs and OS files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.DS_Store
+
+# Sources (paths relative to ~/Prahadeesh): development-team/git-repo/Solution22-AUS/DropinPOS/DropinPOS/.gitignore;
+# private/git-repo/claredesk/booking/.gitignore; development-team/git-repo/s22-internal-projects/tournament/s22-tournament/.gitignore;
+# development-team/git-repo/s22-internal-projects/digital-signage/.gitignore. Consolidated 2026-11-08
